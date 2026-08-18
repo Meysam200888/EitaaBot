@@ -1,20 +1,17 @@
 import json
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, date
 
 TOKEN = os.getenv("EITAA_TOKEN")
 CHAT_ID = "11229751"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MESSAGES_FILE = os.path.join(
-    BASE_DIR,
-    "morning_messages.json"
-)
+MESSAGES_FILE = "morning_messages.json"
+
+START_DATE = date(2026, 8, 19)
 
 
 def send_message(text):
-
     url = f"https://eitaayar.ir/api/{TOKEN}/sendMessage"
 
     response = requests.post(
@@ -29,14 +26,27 @@ def send_message(text):
     print("STATUS:", response.status_code)
     print("RESPONSE:", response.text)
 
-    return response.json()
+    try:
+        return response.json()
+    except Exception:
+        return {
+            "ok": False,
+            "error": response.text
+        }
 
 
 def main():
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().date()
 
     print("Today:", today)
+
+    # تعداد روزهای گذشته از تاریخ شروع
+    days_passed = (today - START_DATE).days
+
+    if days_passed < 0:
+        print("Morning messages have not started yet.")
+        return
 
     with open(
         MESSAGES_FILE,
@@ -46,85 +56,46 @@ def main():
 
         messages = json.load(f)
 
-
-    # =========================
-    # حالت اول:
-    # پیام‌ها فقط متن هستند
-    # =========================
-
-    if messages and isinstance(messages[0], str):
-
-        print(
-            "Simple message format detected."
-        )
-
-        # برای تست، اولین پیام ارسال می‌شود
-        text = messages[0].strip()
-
-        if text:
-
-            result = send_message(text)
-
-            if result.get("ok") is True:
-                print(
-                    "Message sent successfully."
-                )
-            else:
-                print(
-                    "Message was not sent."
-                )
-
+    if not messages:
+        print("No messages found.")
         return
 
+    # انتخاب خودکار پیام
+    index = days_passed % len(messages)
 
-    # =========================
-    # حالت دوم:
-    # پیام‌ها دارای تنظیمات هستند
-    # =========================
+    message = messages[index]
 
-    for message in messages:
+    # اگر پیام به صورت متن ساده باشد
+    if isinstance(message, str):
+        text = message.strip()
 
-        if not isinstance(message, dict):
-            continue
+    # اگر پیام به صورت object باشد
+    elif isinstance(message, dict):
+        if not message.get("enabled", True):
+            print("Selected message is disabled.")
+            return
 
-        if not message.get(
-            "enabled",
-            True
-        ):
-            continue
+        text = message.get("text", "").strip()
 
-        if message.get(
-            "date"
-        ) != today:
-            continue
+    else:
+        print("Invalid message format.")
+        return
 
-        text = message.get(
-            "text",
-            ""
-        ).strip()
+    if not text:
+        print("Message is empty.")
+        return
 
-        if not text:
-            continue
+    print(
+        f"Sending message #{index + 1} "
+        f"of {len(messages)}"
+    )
 
-        result = send_message(
-            text
-        )
+    result = send_message(text)
 
-        if result.get(
-            "ok"
-        ) is True:
-
-            print(
-                "Message sent successfully."
-            )
-
-        else:
-
-            print(
-                "Message was not sent."
-            )
-
-        break
+    if result.get("ok") is True:
+        print("✅ Message sent successfully.")
+    else:
+        print("❌ Message was not sent.")
 
 
 if __name__ == "__main__":
