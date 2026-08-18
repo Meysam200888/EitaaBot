@@ -8,7 +8,7 @@ CHAT_ID = "11229751"
 
 MESSAGES_FILE = "morning_messages.json"
 
-START_DATE = date(2026, 8, 19)
+START_DATE = date(2026, 8, 18)
 
 
 def send_message(text):
