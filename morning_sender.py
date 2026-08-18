@@ -14,6 +14,7 @@ MESSAGES_FILE = os.path.join(
 
 
 def send_message(text):
+
     url = f"https://eitaayar.ir/api/{TOKEN}/sendMessage"
 
     response = requests.post(
@@ -42,27 +43,86 @@ def main():
         "r",
         encoding="utf-8-sig"
     ) as f:
+
         messages = json.load(f)
+
+
+    # =========================
+    # حالت اول:
+    # پیام‌ها فقط متن هستند
+    # =========================
+
+    if messages and isinstance(messages[0], str):
+
+        print(
+            "Simple message format detected."
+        )
+
+        # برای تست، اولین پیام ارسال می‌شود
+        text = messages[0].strip()
+
+        if text:
+
+            result = send_message(text)
+
+            if result.get("ok") is True:
+                print(
+                    "Message sent successfully."
+                )
+            else:
+                print(
+                    "Message was not sent."
+                )
+
+        return
+
+
+    # =========================
+    # حالت دوم:
+    # پیام‌ها دارای تنظیمات هستند
+    # =========================
 
     for message in messages:
 
-        if not message.get("enabled", True):
+        if not isinstance(message, dict):
             continue
 
-        if message.get("date") != today:
+        if not message.get(
+            "enabled",
+            True
+        ):
             continue
 
-        text = message.get("text", "").strip()
+        if message.get(
+            "date"
+        ) != today:
+            continue
+
+        text = message.get(
+            "text",
+            ""
+        ).strip()
 
         if not text:
             continue
 
-        result = send_message(text)
+        result = send_message(
+            text
+        )
 
-        if result.get("ok") is True:
-            print("Message sent successfully.")
+        if result.get(
+            "ok"
+        ) is True:
+
+            print(
+                "Message sent successfully."
+            )
+
         else:
-            print("Message was not sent.")
+
+            print(
+                "Message was not sent."
+            )
 
         break
 
