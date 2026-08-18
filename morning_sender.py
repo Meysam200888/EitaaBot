@@ -3,9 +3,8 @@ import os
 import requests
 from datetime import datetime, date
 
-TOKEN = os.getenv("EITAA_TOKEN")
+TOKEN = "bot515886:ea464768-4ccc-4c05-ab63-45fee06f7411"
 CHAT_ID = "11229751"
-
 MESSAGES_FILE = "morning_messages.json"
 
 START_DATE = date(2026, 8, 19)
