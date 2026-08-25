@@ -2,7 +2,8 @@ name: Eitaa Morning Message
 
 on:
   schedule:
-    - cron: "30 5 * * *"
+    # ساعت 06:00 صبح به وقت ایران (UTC+3:30)
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +22,19 @@ jobs:
       - name: Install requests
         run: pip install requests
 
-      - name: Send morning message
+      - name: Check files
+        run: |
+          echo "Files in repository:"
+          ls -la
+          echo "Checking message files:"
+          test -f morning_sender.py
+          test -f morning_messages.json
+          test -f "مرحله_۱_۳۰۰_متن_فرزندپروری_و_روانشناسی_کودک.txt"
+          test -f "200_poems_children_shokoofehaye_mahdavi.txt"
+          test -f "300_texts_parenting_children.txt"
+          echo "All required files found."
+
+      - name: Send morning messages
         env:
           EITAA_TOKEN: ${{ secrets.EITAA_TOKEN }}
         run: python morning_sender.py
