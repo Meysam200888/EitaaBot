@@ -3,9 +3,9 @@ import os
 import requests
 from datetime import datetime, date
 
-TOKEN = os.environ.get("EITAA_TOKEN", "")
+TOKEN = os.environ.get("bot515886:d4de9ae0-e0f2-44d6-b57b-98605f81a7cf", "")
 
-CHAT_ID = "11229751"
+CHAT_ID = "11234919"
 
 MORNING_MESSAGES_FILE = "morning_messages.json"
 
