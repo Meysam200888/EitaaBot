@@ -1,8 +1,12 @@
+```yaml
 name: Eitaa Morning Message
 
 on:
   schedule:
+    # ساعت 06:00 به وقت UTC
+    # اگر منطقه زمانی تو UTC+3:30 باشد، این ساعت حدود 09:30 محلی است.
     - cron: "30 2 * * *"
+
   workflow_dispatch:
 
 jobs:
@@ -21,7 +25,8 @@ jobs:
       - name: Install requests
         run: pip install requests
 
-      - name: Send morning message
+      - name: Send messages
         env:
           EITAA_TOKEN: ${{ secrets.EITAA_TOKEN }}
         run: python morning_sender.py
+```
