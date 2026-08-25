@@ -3,45 +3,42 @@ import os
 import requests
 from datetime import datetime, date
 
-# =========================================================
+
+# ============================================================
 # تنظیمات
-# =========================================================
+# ============================================================
 
-TOKEN = os.environ.get("EITAA_TOKEN", "")
+TOKEN = os.getenv("EITAA_TOKEN")
 
-# Chat ID گروه ایتا
+# Chat ID گروه جدید
 CHAT_ID = "11234919"
 
-# فایل پیام‌های صبح‌بخیر
-MORNING_MESSAGES_FILE = "morning_messages.json"
+# تاریخ شروع
+START_DATE = date(2026, 8, 19)
 
-# فایل‌های متنی که بعد از پیام صبح‌بخیر ارسال می‌شوند
-FILES_TO_SEND = [
+# فایل پیام صبح بخیر
+MORNING_FILE = "morning_messages.json"
+
+# فایل‌هایی که بعد از صبح بخیر ارسال می‌شوند
+TXT_FILES = [
     "مرحله_۱_۳۰۰_متن_فرزندپروری_و_روانشناسی_کودک.txt",
     "200_poems_children_shokoofehaye_mahdavi.txt",
     "300_texts_parenting_children.txt"
 ]
 
-# تاریخ شروع انتخاب پیام‌ها
-START_DATE = date(2026, 8, 19)
 
-
-# =========================================================
-# ارسال پیام به ایتا
-# =========================================================
+# ============================================================
+# ارسال پیام
+# ============================================================
 
 def send_message(text):
 
     if not TOKEN:
-        print("❌ EITAA_TOKEN تنظیم نشده است.")
-        return False
-
-    if not CHAT_ID:
-        print("❌ CHAT_ID تنظیم نشده است.")
+        print("❌ EITAA_TOKEN پیدا نشد.")
         return False
 
     if not text or not text.strip():
-        print("⚠️ متن خالی است.")
+        print("⚠️ پیام خالی است.")
         return False
 
     url = f"https://eitaayar.ir/api/{TOKEN}/sendMessage"
@@ -63,34 +60,56 @@ def send_message(text):
         try:
             result = response.json()
         except Exception:
+
             print("❌ پاسخ JSON معتبر نیست.")
             return False
 
         if result.get("ok") is True:
+
+            print("✅ پیام ارسال شد.")
             return True
 
         print("❌ ارسال ناموفق بود.")
-        return False
-
-    except Exception as e:
-
-        print("❌ خطا در ارسال پیام:")
-        print(e)
 
         return False
 
+    except Exception as error:
 
-# =========================================================
-# خواندن پیام صبح‌بخیر
-# =========================================================
+        print("❌ خطا در ارسال:")
 
-def load_morning_message():
+        print(error)
 
-    if not os.path.exists(MORNING_MESSAGES_FILE):
+        return False
+
+
+# ============================================================
+# شماره روز
+# ============================================================
+
+def get_day_number():
+
+    today = datetime.now().date()
+
+    days_passed = (
+        today - START_DATE
+    ).days
+
+    if days_passed < 0:
+        return 0
+
+    return days_passed
+
+
+# ============================================================
+# خواندن پیام صبح بخیر
+# ============================================================
+
+def get_morning_message():
+
+    if not os.path.exists(MORNING_FILE):
 
         print(
-            f"❌ فایل پیدا نشد: "
-            f"{MORNING_MESSAGES_FILE}"
+            f"❌ فایل پیدا نشد: {MORNING_FILE}"
         )
 
         return None
@@ -98,49 +117,34 @@ def load_morning_message():
     try:
 
         with open(
-            MORNING_MESSAGES_FILE,
+            MORNING_FILE,
             "r",
             encoding="utf-8-sig"
-        ) as f:
+        ) as file:
 
-            messages = json.load(f)
+            messages = json.load(file)
 
         if not messages:
 
             print(
-                "❌ فایل morning_messages.json خالی است."
+                "❌ morning_messages.json خالی است."
             )
 
             return None
 
-        today = datetime.now().date()
-
-        days_passed = (
-            today - START_DATE
-        ).days
-
-        if days_passed < 0:
-
-            print(
-                "⚠️ تاریخ شروع پیام‌های صبح‌بخیر "
-                "هنوز نرسیده است."
-            )
-
-            return None
+        day_number = get_day_number()
 
         index = (
-            days_passed %
+            day_number %
             len(messages)
         )
 
         message = messages[index]
 
-        # اگر پیام به صورت متن ساده باشد
         if isinstance(message, str):
 
             text = message.strip()
 
-        # اگر پیام به صورت object باشد
         elif isinstance(message, dict):
 
             if not message.get(
@@ -149,8 +153,7 @@ def load_morning_message():
             ):
 
                 print(
-                    "⚠️ پیام انتخاب‌شده "
-                    "غیرفعال است."
+                    "⚠️ پیام صبح بخیر غیرفعال است."
                 )
 
                 return None
@@ -163,42 +166,37 @@ def load_morning_message():
         else:
 
             print(
-                "❌ فرمت پیام صبح‌بخیر نامعتبر است."
+                "❌ فرمت پیام صبح بخیر نامعتبر است."
             )
 
             return None
 
         if not text:
 
-            print(
-                "⚠️ پیام صبح‌بخیر خالی است."
-            )
-
             return None
 
         print(
-            f"🌅 پیام صبح‌بخیر "
+            f"🌅 پیام صبح بخیر "
             f"شماره {index + 1} "
             f"از {len(messages)}"
         )
 
         return text
 
-    except Exception as e:
+    except Exception as error:
 
         print(
-            "❌ خطا در خواندن "
-            "morning_messages.json:"
+            "❌ خطا در خواندن پیام صبح بخیر:"
         )
 
-        print(e)
+        print(error)
 
         return None
 
 
-# =========================================================
-# خواندن فایل TXT
-# =========================================================
+# ============================================================
+# خواندن متن‌های TXT
+# ============================================================
 
 def load_txt_messages(filename):
 
@@ -216,11 +214,10 @@ def load_txt_messages(filename):
             filename,
             "r",
             encoding="utf-8-sig"
-        ) as f:
+        ) as file:
 
-            content = f.read()
+            content = file.read()
 
-        # یکسان‌سازی خط‌ها
         content = content.replace(
             "\r\n",
             "\n"
@@ -231,8 +228,25 @@ def load_txt_messages(filename):
             "\n"
         )
 
-        # جدا کردن متن‌ها
-        parts = content.split("\n\n")
+        # ----------------------------------------------------
+        # جداکننده اصلی فایل‌ها
+        # ----------------------------------------------------
+
+        separator = (
+            "========================================================================"
+        )
+
+        if separator in content:
+
+            parts = content.split(
+                separator
+            )
+
+        else:
+
+            parts = content.split(
+                "\n\n"
+            )
 
         messages = []
 
@@ -246,51 +260,22 @@ def load_txt_messages(filename):
 
         return messages
 
-    except Exception as e:
+    except Exception as error:
 
         print(
-            f"❌ خطا در خواندن فایل "
-            f"{filename}:"
+            f"❌ خطا در خواندن {filename}:"
         )
 
-        print(e)
+        print(error)
 
         return []
 
 
-# =========================================================
-# انتخاب متن روزانه
-# =========================================================
+# ============================================================
+# گرفتن متن مربوط به امروز
+# ============================================================
 
-def get_daily_index(count):
-
-    if count <= 0:
-
-        return 0
-
-    today = datetime.now().date()
-
-    days_passed = (
-        today - START_DATE
-    ).days
-
-    if days_passed < 0:
-
-        return 0
-
-    return days_passed % count
-
-
-# =========================================================
-# ارسال فایل‌های TXT
-# =========================================================
-
-def send_txt_file(filename):
-
-    print()
-    print("=" * 60)
-    print(f"📄 فایل: {filename}")
-    print("=" * 60)
+def get_today_text(filename):
 
     messages = load_txt_messages(
         filename
@@ -298,56 +283,59 @@ def send_txt_file(filename):
 
     if not messages:
 
+        return None
+
+    day_number = get_day_number()
+
+    # هر روز فقط یک متن
+    index = (
+        day_number %
+        len(messages)
+    )
+
+    print(
+        f"📝 فایل: {filename}"
+    )
+
+    print(
+        f"📝 متن امروز: "
+        f"{index + 1}/{len(messages)}"
+    )
+
+    return messages[index]
+
+
+# ============================================================
+# ارسال متن روزانه از فایل
+# ============================================================
+
+def send_today_text(filename):
+
+    print("")
+    print("-" * 60)
+
+    text = get_today_text(
+        filename
+    )
+
+    if text is None:
+
         print(
-            "⚠️ هیچ متنی در این فایل پیدا نشد."
+            "⚠️ متنی برای ارسال پیدا نشد."
         )
 
         return False
 
-    index = get_daily_index(
-        len(messages)
-    )
-
-    text = messages[index]
-
-    print(
-        f"📝 متن شماره "
-        f"{index + 1} "
-        f"از {len(messages)}"
-    )
-
-    print(
-        "📤 در حال ارسال..."
-    )
-
-    success = send_message(text)
-
-    if success:
-
-        print(
-            f"✅ متن فایل "
-            f"{filename} "
-            f"با موفقیت ارسال شد."
-        )
-
-        return True
-
-    print(
-        f"❌ ارسال فایل "
-        f"{filename} "
-        f"ناموفق بود."
-    )
-
-    return False
+    return send_message(text)
 
 
-# =========================================================
+# ============================================================
 # برنامه اصلی
-# =========================================================
+# ============================================================
 
 def main():
 
-    print()
+    print("")
     print("=" * 60)
     print("🌸 Eitaa Automatic Message Sender")
     print("=" * 60)
@@ -367,15 +355,15 @@ def main():
     )
 
     print(
-        "🆔 Chat ID:",
-        CHAT_ID
+        "📌 شماره روز:",
+        get_day_number() + 1
     )
 
     print("=" * 60)
 
-    # -----------------------------------------------------
+    # --------------------------------------------------------
     # بررسی Token
-    # -----------------------------------------------------
+    # --------------------------------------------------------
 
     if not TOKEN:
 
@@ -383,29 +371,21 @@ def main():
             "❌ EITAA_TOKEN پیدا نشد."
         )
 
-        print(
-            "Secret مربوط به EITAA_TOKEN "
-            "را در GitHub Actions بررسی کن."
-        )
-
         return
 
     print(
-        "✅ EITAA_TOKEN دریافت شد."
+        "✅ Token دریافت شد."
     )
 
-    # -----------------------------------------------------
-    # مرحله ۱
-    # پیام صبح‌بخیر
-    # -----------------------------------------------------
+    # ========================================================
+    # 1. پیام صبح بخیر
+    # ========================================================
 
-    print()
-    print("=" * 60)
-    print("🌅 مرحله ۱: پیام صبح‌بخیر")
-    print("=" * 60)
+    print("")
+    print("🌅 مرحله 1: پیام صبح بخیر")
 
     morning_message = (
-        load_morning_message()
+        get_morning_message()
     )
 
     if morning_message:
@@ -414,53 +394,81 @@ def main():
             morning_message
         )
 
-        if success:
+        if not success:
 
             print(
-                "✅ پیام صبح‌بخیر ارسال شد."
+                "❌ پیام صبح بخیر ارسال نشد."
             )
 
-        else:
-
-            print(
-                "❌ ارسال پیام صبح‌بخیر ناموفق بود."
-            )
+            return
 
     else:
 
         print(
-            "⚠️ پیام صبح‌بخیر ارسال نشد."
+            "⚠️ پیام صبح بخیر پیدا نشد."
         )
 
-    # -----------------------------------------------------
-    # مرحله ۲
-    # فایل‌های TXT
-    # -----------------------------------------------------
+    # ========================================================
+    # 2. فایل اول
+    # ========================================================
 
-    print()
-    print("=" * 60)
-    print("📚 مرحله ۲: فایل‌های متنی")
-    print("=" * 60)
+    print("")
+    print(
+        "📚 مرحله 2: "
+        "فرزندپروری و روانشناسی کودک"
+    )
 
-    for filename in FILES_TO_SEND:
+    if not send_today_text(
+        TXT_FILES[0]
+    ):
 
-        send_txt_file(
-            filename
+        print(
+            "❌ ارسال فایل اول ناموفق بود."
         )
 
-    # -----------------------------------------------------
+    # ========================================================
+    # 3. فایل دوم
+    # ========================================================
+
+    print("")
+    print(
+        "📚 مرحله 3: شعرهای کودکانه"
+    )
+
+    if not send_today_text(
+        TXT_FILES[1]
+    ):
+
+        print(
+            "❌ ارسال فایل دوم ناموفق بود."
+        )
+
+    # ========================================================
+    # 4. فایل سوم
+    # ========================================================
+
+    print("")
+    print(
+        "📚 مرحله 4: متن‌های فرزندپروری"
+    )
+
+    if not send_today_text(
+        TXT_FILES[2]
+    ):
+
+        print(
+            "❌ ارسال فایل سوم ناموفق بود."
+        )
+
+    # ========================================================
     # پایان
-    # -----------------------------------------------------
+    # ========================================================
 
-    print()
+    print("")
     print("=" * 60)
-    print("✅ عملیات امروز تمام شد.")
+    print("✅ ارسال‌های امروز تمام شد.")
     print("=" * 60)
 
-
-# =========================================================
-# اجرای برنامه
-# =========================================================
 
 if __name__ == "__main__":
 
