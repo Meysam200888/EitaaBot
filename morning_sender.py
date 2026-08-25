@@ -72,7 +72,6 @@ def load_morning_message():
             return None
 
         today = datetime.now().date()
-
         days_passed = (today - START_DATE).days
 
         if days_passed < 0:
@@ -140,16 +139,12 @@ def load_txt_messages(filename):
         return messages
 
     except Exception as e:
-        print(
-            f"❌ خطا در خواندن {filename}:",
-            e
-        )
+        print(f"❌ خطا در خواندن {filename}: {e}")
         return []
 
 
 def get_daily_index(count):
     today = datetime.now().date()
-
     days_passed = (today - START_DATE).days
 
     if days_passed < 0:
@@ -164,18 +159,16 @@ def main():
     print("Eitaa Automatic Message Sender")
     print("=" * 50)
 
-    today = datetime.now().date()
-
-    print("📅 Today:", today)
+    print("📅 Today:", datetime.now().date())
     print("⏰ Time:", datetime.now().strftime("%H:%M:%S"))
 
     if not TOKEN:
         print("❌ EITAA_TOKEN موجود نیست.")
         return
 
-    # =========================================================
-    # مرحله 1 - پیام صبح بخیر
-    # =========================================================
+    # ---------------------------------------------------------
+    # 1. پیام صبح بخیر
+    # ---------------------------------------------------------
 
     morning_message = load_morning_message()
 
@@ -190,9 +183,9 @@ def main():
         else:
             print("❌ ارسال پیام صبح‌بخیر ناموفق بود.")
 
-    # =========================================================
-    # مرحله 2 - سه فایل TXT
-    # =========================================================
+    # ---------------------------------------------------------
+    # 2. فایل‌های TXT
+    # ---------------------------------------------------------
 
     for filename in FILES_TO_SEND:
 
@@ -221,13 +214,9 @@ def main():
         success = send_message(text)
 
         if success:
-            print(
-                f"✅ متن فایل {filename} ارسال شد."
-            )
+            print(f"✅ متن فایل {filename} ارسال شد.")
         else:
-            print(
-                f"❌ ارسال فایل {filename} ناموفق بود."
-            )
+            print(f"❌ ارسال فایل {filename} ناموفق بود.")
 
     print()
     print("=" * 50)
