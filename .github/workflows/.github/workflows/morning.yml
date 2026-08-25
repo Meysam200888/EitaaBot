@@ -1,12 +1,8 @@
-```yaml
 name: Eitaa Morning Message
 
 on:
   schedule:
-    # ساعت 06:00 به وقت UTC
-    # اگر منطقه زمانی تو UTC+3:30 باشد، این ساعت حدود 09:30 محلی است.
     - cron: "30 2 * * *"
-
   workflow_dispatch:
 
 jobs:
@@ -14,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download files
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -25,8 +21,22 @@ jobs:
       - name: Install requests
         run: pip install requests
 
-      - name: Send messages
+      - name: Check required files
+        run: |
+          echo "Checking files..."
+
+          test -f morning_sender.py
+          test -f morning_messages.json
+
+          test -f "مرحله_۱_۳۰۰_متن_فرزندپروری_و_روانشناسی_کودک.txt"
+
+          test -f "200_poems_children_shokoofehaye_mahdavi.txt"
+
+          test -f "300_texts_parenting_children.txt"
+
+          echo "✅ All files found."
+
+      - name: Send Eitaa messages
         env:
           EITAA_TOKEN: ${{ secrets.EITAA_TOKEN }}
         run: python morning_sender.py
-```
